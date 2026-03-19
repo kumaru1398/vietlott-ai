@@ -3,6 +3,12 @@ import random
 
 app = Flask(__name__)
 
+from flask import send_from_directory
+
+@app.route('/icon.png')
+def icon():
+    return send_from_directory('static', 'icon.png')
+
 # ===== GENERATOR =====
 def generate():
     nums = random.sample(range(1,56),6)
@@ -13,6 +19,8 @@ HTML = """
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="apple-touch-icon" href="/static/icon.png">
+<link rel="icon" href="/static/icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body { background:#0d0d0d; color:white; font-family:sans-serif; text-align:center; }
