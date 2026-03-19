@@ -84,9 +84,11 @@ function spinNumbers(){
 def home():
     return render_template_string(HTML)
 
+from flask import jsonify
+
 @app.route('/api')
 def api():
-    return generate()
+    return jsonify(generate())
 
 if __name__ == '__main__':
     import os
