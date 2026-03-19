@@ -67,9 +67,10 @@ function spinNumbers(){
     fetch('/api')
     .then(res=>res.json())
     .then(data=>{
+    let nums = data.numbers;
       balls.forEach((b,i)=>{
         b.classList.remove('spin');
-        b.innerText = data[i];
+        b.innerText = nums[i];
         b.classList.add(getColor(data[i]));
       });
     });
@@ -88,7 +89,8 @@ from flask import jsonify
 
 @app.route('/api')
 def api():
-    return jsonify(generate())
+    data = generate()
+    return jsonify({"numbers": data})
 
 if __name__ == '__main__':
     import os
