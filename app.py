@@ -43,7 +43,7 @@ button { padding:15px; width:100%; margin-top:20px; font-size:18px; border:none;
 </head>
 <body>
 <div class="container">
-<h2>🎯 Vietlott AI Animation</h2>
+<h2>🎯 Vietlott Random Numbers</h2>
 
 <div id="result"></div>
 
