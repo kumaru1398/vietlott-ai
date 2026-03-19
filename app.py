@@ -67,13 +67,13 @@ function spinNumbers(){
     fetch('/api')
     .then(res=>res.json())
     .then(data=>{
-    let nums = data.numbers;
-      balls.forEach((b,i)=>{
-        b.classList.remove('spin');
-        b.innerText = nums[i];
-        b.classList.add(getColor(data[i]));
-      });
-    });
+  let nums = data.numbers;
+  balls.forEach((b,i)=>{
+    b.classList.remove('spin');
+    b.innerText = nums[i];
+    b.classList.add(getColor(nums[i]));
+  });
+});
   },1500);
 }
 </script>
