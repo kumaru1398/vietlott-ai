@@ -167,9 +167,12 @@ def monte_carlo_generate(history, simulations=300):
 def api():
     history = update_history()
 
-    if len(history)<10:
+    if len(history) < 10:
         nums = sorted(random.sample(range(1,56),6))
-        return jsonify({"numbers": nums})
+        return jsonify({
+            "set1": nums,
+            "set2": nums
+        })
 
     top_sets = monte_carlo_generate(history)
 
@@ -185,19 +188,76 @@ HTML = """
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="apple-touch-icon" href="/icon.png">
+
 <style>
-body { background:#0d0d0d; color:white; text-align:center; font-family:sans-serif;}
-.ball {display:inline-block;width:50px;height:50px;line-height:50px;
-border-radius:50%;margin:5px;font-weight:bold}
-.low{background:#6ec6ff}.mid{background:#ffd166;color:black}.high{background:#ff6b6b}
-button{padding:15px;width:80%;font-size:18px;border-radius:10px;background:#2ecc71}
+body {
+  background: radial-gradient(circle, #0f2027, #203a43, #2c5364);
+  color: white;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+h2 {
+  margin-top: 20px;
+}
+
+.container {
+  margin-top: 30px;
+}
+
+.ball {
+  display:inline-block;
+  width:60px;
+  height:60px;
+  line-height:60px;
+  border-radius:50%;
+  margin:8px;
+  font-weight:bold;
+  font-size:20px;
+  background:#222;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  transition: all 0.3s ease;
+}
+
+.low { background:#6ec6ff; }
+.mid { background:#ffd166; color:black; }
+.high { background:#ff6b6b; }
+
+.spin {
+  animation: spin 0.2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg) scale(1.1); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(1.1); }
+}
+
+.glow {
+  box-shadow: 0 0 20px #fff, 0 0 40px #0ff;
+}
+
+button {
+  padding:15px;
+  width:80%;
+  font-size:18px;
+  border:none;
+  border-radius:12px;
+  background: linear-gradient(45deg, #00c9ff, #92fe9d);
+  color:black;
+  margin-top:30px;
+}
 </style>
 </head>
+
 <body>
-<h2>🎯 Vietlott AI PRO</h2>
-<div id="set1"></div>
-<div id="set2"></div>
-<button onclick="run()">QUAY SIÊU AI</button>
+
+<h2>🎰 Vietlott Casino</h2>
+
+<div class="container" id="set1"></div>
+<div class="container" id="set2"></div>
+
+<button onclick="run()">🎲 SPIN NOW</button>
 
 <script>
 function color(n){
@@ -206,26 +266,60 @@ function color(n){
  return 'high';
 }
 
-function render(id, nums){
+function createBalls(id){
  let el = document.getElementById(id);
- el.innerHTML="";
- nums.forEach(n=>{
-  let b=document.createElement('span');
-  b.className='ball '+color(n);
-  b.innerText=n;
-  el.appendChild(b);
+ el.innerHTML = "";
+ let balls = [];
+
+ for(let i=0;i<6;i++){
+   let b = document.createElement('div');
+   b.className = 'ball spin';
+   b.innerText = Math.floor(Math.random()*55)+1;
+   el.appendChild(b);
+   balls.push(b);
+ }
+ return balls;
+}
+
+function animateResult(balls, nums){
+ if(!nums) return;
+
+ nums.forEach((num, i)=>{
+   setTimeout(()=>{
+     let b = balls[i];
+     b.classList.remove('spin');
+     b.innerText = num;
+     b.className = 'ball ' + color(num) + ' glow';
+   }, i * 400);
  });
 }
 
 function run(){
+ let balls1 = createBalls('set1');
+ let balls2 = createBalls('set2');
+
  fetch('/api')
  .then(r=>r.json())
  .then(d=>{
-  render('set1', d.set1);
-  render('set2', d.set2);
+   console.log("API DATA:", d);
+
+   if(!d.set1 || !d.set2){
+     alert("API lỗi hoặc chưa có dữ liệu!");
+     return;
+   }
+
+   setTimeout(()=>{
+     animateResult(balls1, d.set1);
+     animateResult(balls2, d.set2);
+   }, 1500);
+ })
+ .catch(err=>{
+   console.error(err);
+   alert("Không gọi được API!");
  });
 }
 </script>
+
 </body>
 </html>
 """
