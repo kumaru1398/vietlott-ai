@@ -143,7 +143,7 @@ def monte_carlo_generate(history, simulations=500):
 
     results = []
 
-    # ===== GENERATE ALL SETS =====
+    # ===== GENERATE SET1 =====
     for _ in range(simulations):
         s = smart_pick(scores, pairs)
 
@@ -158,7 +158,7 @@ def monte_carlo_generate(history, simulations=500):
 
         results.append((tuple(sorted(s)), fitness))
 
-    # ===== REMOVE DUPLICATE =====
+    # ===== UNIQUE =====
     unique = {}
     for s, f in results:
         if s not in unique or f > unique[s]:
@@ -166,27 +166,28 @@ def monte_carlo_generate(history, simulations=500):
 
     sorted_sets = sorted(unique.items(), key=lambda x: x[1], reverse=True)
 
-    # ===== SET 1 (BEST) =====
+    # ===== SET 1 =====
     set1 = list(sorted_sets[0][0])
+    forbidden = set(set1)
 
-    # ===== SET 2 (NO OVERLAP) =====
+    # ===== SET 2 (STRICT NO OVERLAP) =====
     best_set2 = None
     best_score = -1
 
-    forbidden = set(set1)
-
     for _ in range(simulations):
-        # pick lại nhưng tránh số của set1
         candidate = []
 
-        available = [n for n in range(1,56) if n not in forbidden]
-
         while len(candidate) < 6:
-            n = random.choice(available)
+            n = random.randint(1,55)
+
+            # ❌ CHẶN TRÙNG TUYỆT ĐỐI
+            if n in forbidden:
+                continue
+
             if n not in candidate:
                 candidate.append(n)
 
-        # tính score
+        # ===== SCORE =====
         fitness = sum(scores[n] for n in candidate)
 
         pair_bonus = 0
@@ -202,7 +203,16 @@ def monte_carlo_generate(history, simulations=500):
 
     set2 = sorted(best_set2)
 
-    return [sorted(set1), set2]
+    # ===== FINAL CHECK (ANTI BUG) =====
+    if set(set1) & set(set2):
+        # fallback random nếu có bug
+        set2 = []
+        while len(set2) < 6:
+            n = random.randint(1,55)
+            if n not in set1 and n not in set2:
+                set2.append(n)
+
+    return [sorted(set1), sorted(set2)]
 
 # ===== API =====
 @app.route('/api')
