@@ -217,21 +217,8 @@ def monte_carlo_generate(history, simulations=500):
 # ===== API =====
 @app.route('/api')
 def api():
-    history = update_history()
-
-    if len(history) < 10:
-        nums = sorted(random.sample(range(1,56),6))
-        return jsonify({
-            "set1": nums,
-            "set2": nums
-        })
-
-    top_sets = monte_carlo_generate(history)
-
-    return jsonify({
-        "set1": top_sets[0],
-        "set2": top_sets[1]
-    })
+    sets = monte_carlo_generate(history)
+    return jsonify({"numbers": sets})
 
 # ===== UI =====
 HTML = """
@@ -312,6 +299,8 @@ button {
 <button onclick="run()">🎲 SPIN NOW</button>
 
 <script>
+console.log(data.numbers);
+
 function color(n){
  if(n<=18) return 'low';
  if(n<=36) return 'mid';
@@ -351,24 +340,35 @@ function run(){
  let balls2 = createBalls('set2');
 
  fetch('/api')
- .then(r=>r.json())
- .then(d=>{
-   console.log("API DATA:", d);
+.then(res=>res.json())
+.then(data=>{
+  let set1 = data.numbers[0];
+  let set2 = data.numbers[1];
 
-   if(!d.set1 || !d.set2){
-     alert("API lỗi hoặc chưa có dữ liệu!");
-     return;
-   }
+  let container = document.getElementById('result');
+  container.innerHTML = '';
 
-   setTimeout(()=>{
-     animateResult(balls1, d.set1);
-     animateResult(balls2, d.set2);
-   }, 1500);
- })
- .catch(err=>{
-   console.error(err);
-   alert("Không gọi được API!");
- });
+  // ===== SET 1 =====
+  let row1 = document.createElement('div');
+  set1.forEach(n=>{
+    let b = document.createElement('span');
+    b.className = 'ball ' + getColor(n);
+    b.innerText = n;
+    row1.appendChild(b);
+  });
+
+  // ===== SET 2 =====
+  let row2 = document.createElement('div');
+  set2.forEach(n=>{
+    let b = document.createElement('span');
+    b.className = 'ball ' + getColor(n);
+    b.innerText = n;
+    row2.appendChild(b);
+  });
+
+  container.appendChild(row1);
+  container.appendChild(row2);
+});
 }
 </script>
 
