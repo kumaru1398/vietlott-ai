@@ -138,15 +138,14 @@ def smart_pick(scores, pairs):
     return enforce_diversity(selected)
 
 # ===== MONTE CARLO =====
-def monte_carlo_generate(history, simulations=300):
+def monte_carlo_generate(history, simulations=500):
     scores, pairs = score_numbers(history)
 
-    best_sets = []
+    results = []
 
     for _ in range(simulations):
         s = smart_pick(scores, pairs)
 
-        # fitness = tổng score + pair strength
         fitness = sum(scores[n] for n in s)
 
         pair_bonus = 0
@@ -156,11 +155,31 @@ def monte_carlo_generate(history, simulations=300):
 
         fitness += pair_bonus * 2
 
-        best_sets.append((s, fitness))
+        results.append((tuple(sorted(s)), fitness))  # 👈 dùng tuple để loại trùng
 
-    best_sets.sort(key=lambda x: x[1], reverse=True)
+    # ===== REMOVE DUPLICATE =====
+    unique = {}
+    for s, f in results:
+        if s not in unique or f > unique[s]:
+            unique[s] = f
 
-    return [best_sets[0][0], best_sets[1][0]]
+    # ===== SORT =====
+    sorted_sets = sorted(unique.items(), key=lambda x: x[1], reverse=True)
+
+    # ===== LẤY 2 BỘ KHÁC NHAU =====
+    set1 = list(sorted_sets[0][0])
+
+    set2 = None
+    for s, _ in sorted_sets[1:]:
+        if len(set(s) & set(set1)) < 4:  # 👈 không trùng quá nhiều
+            set2 = list(s)
+            break
+
+    # fallback nếu không tìm được
+    if not set2:
+        set2 = list(sorted_sets[1][0])
+
+    return [set1, set2]
 
 # ===== API =====
 @app.route('/api')
