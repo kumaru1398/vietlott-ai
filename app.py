@@ -143,6 +143,7 @@ def monte_carlo_generate(history, simulations=500):
 
     results = []
 
+    # ===== GENERATE ALL SETS =====
     for _ in range(simulations):
         s = smart_pick(scores, pairs)
 
@@ -155,7 +156,7 @@ def monte_carlo_generate(history, simulations=500):
 
         fitness += pair_bonus * 2
 
-        results.append((tuple(sorted(s)), fitness))  # 👈 dùng tuple để loại trùng
+        results.append((tuple(sorted(s)), fitness))
 
     # ===== REMOVE DUPLICATE =====
     unique = {}
@@ -163,23 +164,45 @@ def monte_carlo_generate(history, simulations=500):
         if s not in unique or f > unique[s]:
             unique[s] = f
 
-    # ===== SORT =====
     sorted_sets = sorted(unique.items(), key=lambda x: x[1], reverse=True)
 
-    # ===== LẤY 2 BỘ KHÁC NHAU =====
+    # ===== SET 1 (BEST) =====
     set1 = list(sorted_sets[0][0])
 
-    set2 = None
-    for s, _ in sorted_sets[1:]:
-        if len(set(s) & set(set1)) < 4:  # 👈 không trùng quá nhiều
-            set2 = list(s)
-            break
+    # ===== SET 2 (NO OVERLAP) =====
+    best_set2 = None
+    best_score = -1
 
-    # fallback nếu không tìm được
-    if not set2:
-        set2 = list(sorted_sets[1][0])
+    forbidden = set(set1)
 
-    return [set1, set2]
+    for _ in range(simulations):
+        # pick lại nhưng tránh số của set1
+        candidate = []
+
+        available = [n for n in range(1,56) if n not in forbidden]
+
+        while len(candidate) < 6:
+            n = random.choice(available)
+            if n not in candidate:
+                candidate.append(n)
+
+        # tính score
+        fitness = sum(scores[n] for n in candidate)
+
+        pair_bonus = 0
+        for i in range(len(candidate)):
+            for j in range(i+1,len(candidate)):
+                pair_bonus += pairs.get(tuple(sorted((candidate[i],candidate[j]))),0)
+
+        fitness += pair_bonus * 2
+
+        if fitness > best_score:
+            best_score = fitness
+            best_set2 = candidate
+
+    set2 = sorted(best_set2)
+
+    return [sorted(set1), set2]
 
 # ===== API =====
 @app.route('/api')
