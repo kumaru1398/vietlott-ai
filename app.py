@@ -237,11 +237,6 @@ def home():
 
 from flask import jsonify
 
-@app.route('/api')
-def api():
-    data = generate()
-    return jsonify({"numbers": data})
-
 if __name__ == '__main__':
     import os
     port = int(os.environ.get("PORT", 10000))
