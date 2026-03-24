@@ -1,29 +1,25 @@
-from flask import Flask, render_template_string, jsonify
-import random, math, os
-from collections import Counter
-import requests
+from flask import Flask, render_template_string, jsonify, send_from_directory
+import random, os
 
 app = Flask(__name__)
 
-# ===== ICON ROUTE =====
-from flask import send_from_directory
+# ===== ICON =====
 @app.route('/icon.png')
 def icon():
     return send_from_directory('static', 'icon.png')
 
-# ===== SIMPLE GENERATOR (KEEP STABLE) =====
+# ===== GENERATOR (NO OVERLAP) =====
 def generate():
     set1 = sorted(random.sample(range(1,56),6))
     remaining = [n for n in range(1,56) if n not in set1]
     set2 = sorted(random.sample(remaining,6))
     return [set1, set2]
 
-# ===== API =====
 @app.route('/api')
 def api():
     return jsonify({"numbers": generate()})
 
-# ===== SLOT MACHINE UI =====
+# ===== PRO CASINO UI =====
 HTML = """
 <!DOCTYPE html>
 <html>
@@ -33,51 +29,58 @@ HTML = """
 
 <style>
 body {
-  background: black;
+  background: radial-gradient(circle, #000000, #0f2027);
   color: white;
   text-align: center;
   font-family: sans-serif;
 }
 
-h2 { margin-top:20px; }
-
-.slot {
-  display:flex;
-  justify-content:center;
-  margin:10px;
+h2 {
+  margin-top:20px;
+  text-shadow: 0 0 10px #0ff;
 }
 
+.slot { display:flex; justify-content:center; margin:10px; }
+
 .reel {
-  width:60px;
-  height:60px;
+  width:65px;
+  height:65px;
   overflow:hidden;
   border-radius:50%;
   margin:6px;
   background:#111;
-  border:2px solid #333;
+  border:2px solid #0ff;
+  box-shadow: 0 0 10px #0ff;
 }
 
 .inner {
   display:flex;
   flex-direction:column;
-  animation: spin 0.1s linear infinite;
+  animation: spin 0.08s linear infinite;
 }
 
 .ball {
-  width:60px;
-  height:60px;
-  line-height:60px;
-  text-align:center;
+  width:65px;
+  height:65px;
+  line-height:65px;
   font-weight:bold;
+  font-size:20px;
 }
 
 @keyframes spin {
   0% { transform: translateY(0); }
-  100% { transform: translateY(-60px); }
+  100% { transform: translateY(-65px); }
 }
 
-.stop {
-  animation:none !important;
+.stop { animation:none !important; }
+
+.win {
+  animation: glow 0.5s infinite alternate;
+}
+
+@keyframes glow {
+  from { box-shadow:0 0 10px #fff; }
+  to { box-shadow:0 0 25px #0ff; }
 }
 
 button {
@@ -85,27 +88,30 @@ button {
   width:80%;
   font-size:18px;
   border:none;
-  border-radius:10px;
-  background:#00ffcc;
+  border-radius:12px;
+  background: linear-gradient(45deg, #00c9ff, #92fe9d);
+  color:black;
   margin-top:20px;
 }
+
 </style>
 </head>
 
 <body>
-<h2>🎰 SLOT VIETLOTT</h2>
+<h2>🎰 CASINO 2.0</h2>
 
 <div id="set1" class="slot"></div>
 <div id="set2" class="slot"></div>
 
-<button onclick="run()">SPIN</button>
+<button onclick="run()">🎲 SPIN NOW</button>
+
+<audio id="tick" src="https://www.soundjay.com/machine/slot-machine-1.mp3"></audio>
+<audio id="win" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
 
 <script>
-
 function createReels(id){
   let container = document.getElementById(id);
   container.innerHTML = '';
-
   let reels = [];
 
   for(let i=0;i<6;i++){
@@ -126,16 +132,29 @@ function createReels(id){
     container.appendChild(reel);
     reels.push(inner);
   }
-
   return reels;
 }
 
 function stopReels(reels, numbers){
+  let tick = document.getElementById('tick');
+  let win = document.getElementById('win');
+
   numbers.forEach((num, i)=>{
     setTimeout(()=>{
+      tick.currentTime = 0;
+      tick.play();
+
       let r = reels[i];
       r.classList.add('stop');
       r.innerHTML = '<div class="ball">'+num+'</div>';
+
+      if(i === numbers.length-1){
+        setTimeout(()=>{
+          win.play();
+          r.parentElement.classList.add('win');
+        },300);
+      }
+
     }, i*500);
   });
 }
@@ -151,7 +170,6 @@ function run(){
     stopReels(reels2, data.numbers[1]);
   });
 }
-
 </script>
 </body>
 </html>
